@@ -105,21 +105,29 @@
       player.dy += player.gravity;
       player.y += player.dy;
 
-      // بازیکن روی پلتفرم‌ها قرار گیرد
+      let isOnPlatform = false;
+
       platforms.forEach(p => {
+        // بررسی برخورد
         if (
           player.x + player.width > p.x &&
           player.x < p.x + p.width &&
           player.y + player.height <= p.y &&
           player.y + player.height + player.dy >= p.y
         ) {
-          player.y = p.y - player.height;
-          player.isJumping = false;
+          isOnPlatform = true;
+          player.y = p.y - player.height; // تثبیت موقعیت روی پلتفرم
           player.dy = 0;
+          player.isJumping = false;
         }
       });
 
-      // سقوط بازیکن
+      // اگر بازیکن روی هیچ پلتفرمی نیست، همچنان سقوط کند
+      if (!isOnPlatform) {
+        player.isJumping = true;
+      }
+
+      // سقوط بازیکن از صفحه
       if (player.y > canvas.height) {
         if (leaderboard.length < 1000 || score > leaderboard[leaderboard.length - 1].score) {
           leaderboard.push({ name: "Player", score });
