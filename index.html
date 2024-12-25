@@ -49,7 +49,6 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // تنظیم اندازه برای تطبیق با ویوپورت
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -57,8 +56,24 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    let player = { x: 50, y: canvas.height - 70, width: 30, height: 30, dy: 0, gravity: 0.8, jumpPower: -15, isJumping: false };
-    let platforms = [{ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 }];
+    let player = {
+      x: 50,
+      y: canvas.height - 100,
+      width: 30,
+      height: 30,
+      dy: 0,
+      gravity: 0.8,
+      jumpPower: -15,
+      isJumping: false
+    };
+
+    let platforms = [
+      { x: 0, y: canvas.height - 50, width: 200, height: 20 },
+      { x: 250, y: canvas.height - 100, width: 200, height: 20 },
+      { x: 500, y: canvas.height - 150, width: 200, height: 20 }
+    ];
+
+    let speed = 2;
     let score = 0;
     let leaderboard = [];
 
@@ -90,12 +105,21 @@
       player.dy += player.gravity;
       player.y += player.dy;
 
-      if (player.y + player.height >= platforms[0].y) {
-        player.y = platforms[0].y - player.height;
-        player.isJumping = false;
-        player.dy = 0;
-      }
+      // بازیکن روی پلتفرم‌ها قرار گیرد
+      platforms.forEach(p => {
+        if (
+          player.x + player.width > p.x &&
+          player.x < p.x + p.width &&
+          player.y + player.height <= p.y &&
+          player.y + player.height + player.dy >= p.y
+        ) {
+          player.y = p.y - player.height;
+          player.isJumping = false;
+          player.dy = 0;
+        }
+      });
 
+      // سقوط بازیکن
       if (player.y > canvas.height) {
         if (leaderboard.length < 1000 || score > leaderboard[leaderboard.length - 1].score) {
           leaderboard.push({ name: "Player", score });
@@ -107,27 +131,44 @@
         resetGame();
       }
 
+      // حرکت پلتفرم‌ها
+      platforms.forEach(p => {
+        p.x -= speed;
+        if (p.x + p.width < 0) {
+          p.x = canvas.width + Math.random() * 200;
+          p.y = canvas.height - 50 - Math.random() * 200;
+        }
+      });
+
       score++;
     }
 
     function resetGame() {
       player.x = 50;
-      player.y = canvas.height - 70;
+      player.y = canvas.height - 100;
       player.dy = 0;
       score = 0;
+      platforms = [
+        { x: 0, y: canvas.height - 50, width: 200, height: 20 },
+        { x: 250, y: canvas.height - 100, width: 200, height: 20 },
+        { x: 500, y: canvas.height - 150, width: 200, height: 20 }
+      ];
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // بازیکن
       ctx.fillStyle = 'white';
       ctx.fillRect(player.x, player.y, player.width, player.height);
 
+      // پلتفرم‌ها
       platforms.forEach(p => {
         ctx.fillStyle = 'green';
         ctx.fillRect(p.x, p.y, p.width, p.height);
       });
 
+      // امتیاز
       ctx.fillStyle = 'white';
       ctx.font = '20px Arial';
       ctx.fillText(`Score: ${score}`, 10, 30);
