@@ -1,23 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Pong Game</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Mobile Platformer Game</title>
+  <style>
+    body, html {
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+      background: #333;
+    }
+    #controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+    }
+    button {
+      background: #444;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      flex: 1;
+    }
+    button:active {
+      background: #666;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Football Pong</h1>
-        <div class="scoreboard">
-            <span id="player1Score">0</span> - <span id="player2Score">0</span>
-        </div>
-        <canvas id="gameCanvas" width="400" height="800"></canvas>
-        <div class="controls">
-            <button id="startBtn">Start</button>
-            <button id="resetBtn">Reset</button>
-        </div>
-    </div>
-    <script src="script.js"></script>
+  <canvas id="gameCanvas"></canvas>
+  <div id="controls">
+    <button id="shortJump">Short Jump</button>
+    <button id="longJump">Long Jump</button>
+  </div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // تنظیم اندازه برای تطبیق با ویوپورت
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let player = { x: 50, y: canvas.height - 70, width: 30, height: 30, dy: 0, gravity: 0.8, jumpPower: -15, isJumping: false };
+    let platforms = [{ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 }];
+    let score = 0;
+    let leaderboard = [];
+
+    function loadLeaderboard() {
+      fetch('leaderboard.json')
+        .then(response => response.json())
+        .then(data => leaderboard = data)
+        .catch(() => leaderboard = []);
+    }
+
+    function saveLeaderboard() {
+      const file = new Blob([JSON.stringify(leaderboard)], { type: 'application/json' });
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'leaderboard.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function jump(short) {
+      if (!player.isJumping) {
+        player.isJumping = true;
+        player.dy = short ? player.jumpPower / 2 : player.jumpPower;
+      }
+    }
+
+    function update() {
+      player.dy += player.gravity;
+      player.y += player.dy;
+
+      if (player.y + player.height >= platforms[0].y) {
+        player.y = platforms[0].y - player.height;
+        player.isJumping = false;
+        player.dy = 0;
+      }
+
+      if (player.y > canvas.height) {
+        if (leaderboard.length < 1000 || score > leaderboard[leaderboard.length - 1].score) {
+          leaderboard.push({ name: "Player", score });
+          leaderboard.sort((a, b) => b.score - a.score);
+          leaderboard = leaderboard.slice(0, 1000);
+          saveLeaderboard();
+        }
+        alert(`Game Over! Your score: ${score}`);
+        resetGame();
+      }
+
+      score++;
+    }
+
+    function resetGame() {
+      player.x = 50;
+      player.y = canvas.height - 70;
+      player.dy = 0;
+      score = 0;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'white';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      platforms.forEach(p => {
+        ctx.fillStyle = 'green';
+        ctx.fillRect(p.x, p.y, p.width, p.height);
+      });
+
+      ctx.fillStyle = 'white';
+      ctx.font = '20px Arial';
+      ctx.fillText(`Score: ${score}`, 10, 30);
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.getElementById('shortJump').addEventListener('click', () => jump(true));
+    document.getElementById('longJump').addEventListener('click', () => jump(false));
+
+    loadLeaderboard();
+    gameLoop();
+  </script>
 </body>
 </html>
