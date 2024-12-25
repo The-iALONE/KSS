@@ -133,7 +133,7 @@
           leaderboard.push({ name: "Player", score });
           leaderboard.sort((a, b) => b.score - a.score);
           leaderboard = leaderboard.slice(0, 1000);
-          saveLeaderboard();
+          
         }
         alert(`Game Over! Your score: ${score}`);
         resetGame();
@@ -191,7 +191,7 @@
     document.getElementById('shortJump').addEventListener('click', () => jump(true));
     document.getElementById('longJump').addEventListener('click', () => jump(false));
 
-    loadLeaderboard();
+   
     gameLoop();
   </script>
 </body>
